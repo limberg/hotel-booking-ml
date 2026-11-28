@@ -1,20 +1,14 @@
-"""Carga, limpieza, partición y preprocesado de los datos."""
+"""Carga, limpieza y partición de los datos."""
 
 from typing import Tuple
 
 import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from hotel_booking_ml.config import (
     ADR_MAX,
     ADR_MIN,
     AGENT_MISSING_LABEL,
-    BINARY_COLS,
-    CATEGORICAL_COLS,
     CHILDREN_FILL_VALUE,
     COMPANY_COL,
     COUNTRY_MISSING_LABEL,
@@ -23,8 +17,6 @@ from hotel_booking_ml.config import (
     LEAKAGE_COLS,
     MIN_GUESTS,
     MIN_NIGHTS,
-    NUMERIC_COLS,
-    ONEHOT_MIN_FREQUENCY,
     RANDOM_STATE,
     RAW_DATA_PATH,
     TARGET,
@@ -149,44 +141,3 @@ def split_data(
     )
 
     return X_train, X_test, y_train, y_test
-
-
-def build_preprocessor() -> ColumnTransformer:
-    """Construye el transformador de columnas, sin ajustar todavía.
-
-    Returns:
-        ColumnTransformer: Transformador con tres bloques: numéricas,
-        binarias y categóricas.
-    """
-    # Numéricas: imputamos con la mediana y estandarizamos
-    numeric_pipeline = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="median")),
-            ("scaler", StandardScaler()),
-        ]
-    )
-
-    # Categóricas: imputamos con el valor más frecuente y aplicamos one-hot
-    # Las categorías con menos reservas que ONEHOT_MIN_FREQUENCY se agrupan
-    # en una sola
-    categorical_pipeline = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            (
-                "one_hot",
-                OneHotEncoder(
-                    min_frequency=ONEHOT_MIN_FREQUENCY,
-                    handle_unknown="infrequent_if_exist",
-                    sparse_output=False,
-                ),
-            ),
-        ]
-    )
-
-    return ColumnTransformer(
-        transformers=[
-            ("numeric", numeric_pipeline, NUMERIC_COLS),
-            ("binary", "passthrough", BINARY_COLS),
-            ("categorical", categorical_pipeline, CATEGORICAL_COLS),
-        ]
-    )
